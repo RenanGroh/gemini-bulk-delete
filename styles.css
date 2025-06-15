@@ -1,38 +1,62 @@
-/* Estilo para o botão de deletar em massa */
-#bulkDeleteBtn {
+/* Estilo principal para o nosso botão */
+#geminiBulkDeleteBtn {
     width: 100%;
-    margin-top: 8px;
+    margin-bottom: 8px; /* Espaço entre ele e o botão de configs */
     padding: 10px;
-    border: 1px solid #c42121;
-    background-color: #f44336;
-    color: white;
-    border-radius: 4px;
+    border: 1px solid #5f6368; /* Cinza escuro, mais sutil */
+    background-color: transparent;
+    color: #e8eaed; /* Cor do texto padrão do Gemini */
+    border-radius: 8px;
     cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    order: -1; /* Força o botão a ir para o topo do container flex */
+}
+
+#geminiBulkDeleteBtn:hover {
+    background-color: #3c4043; /* Cor de hover do Gemini */
+}
+
+/* Estilo para quando o botão está no modo de "Cancelar" */
+#geminiBulkDeleteBtn.cancel-mode {
+    border-color: #8ab4f8; /* Azul do Google */
+    color: #8ab4f8;
+}
+#geminiBulkDeleteBtn.cancel-mode:hover {
+    background-color: rgba(138, 180, 248, 0.1);
+}
+
+/* Estilo para quando o botão está pronto para DELETAR (ativo) */
+#geminiBulkDeleteBtn.active-delete {
+    border-color: #f28b82; /* Vermelho do Google */
+    background-color: #f28b82;
+    color: #202124; /* Texto escuro para contraste */
     font-weight: bold;
-    transition: background-color 0.3s;
+}
+#geminiBulkDeleteBtn.active-delete:hover {
+    border-color: #f6a7a1;
+    background-color: #f6a7a1;
 }
 
-#bulkDeleteBtn:hover {
-    background-color: #d32f2f;
-}
-
-#bulkDeleteBtn:disabled {
-    background-color: #a5a5a5;
-    border-color: #888;
+#geminiBulkDeleteBtn:disabled {
+    background-color: #5f6368;
+    border-color: #5f6368;
+    color: #9aa0a6;
     cursor: not-allowed;
 }
 
-/* Estilo para alinhar o checkbox com o texto do chat */
-.chat-history-item {
+/* Alinha o item de chat quando o checkbox está visível */
+.chat-history-item.selection-active {
     display: flex !important;
     align-items: center;
-    gap: 8px; /* Espaço entre o checkbox e o texto */
+    gap: 12px;
+    padding-left: 8px; /* Adiciona um recuo para alinhar */
 }
 
 .bulk-delete-checkbox {
-    /* Deixa o checkbox um pouco maior e mais fácil de clicar */
     width: 16px;
     height: 16px;
     cursor: pointer;
-    flex-shrink: 0; /* Impede que o checkbox encolha */
+    accent-color: #8ab4f8; /* Cor do checkbox quando marcado */
 }

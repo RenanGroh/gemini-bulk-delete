@@ -1,18 +1,28 @@
-// Aguarda um pouco para garantir que a UI do Gemini carregou completamente.
-// Usamos um MutationObserver para reagir a mudanças no DOM, o que é mais robusto
-// do que um simples setTimeout.
-const observer = new MutationObserver((mutations, obs) => {
-    // Procura o local onde os botões de controle ficam (ex: "Novo Chat")
-    const sidebarControls = document.querySelector('.nav-controls');
-    // Procura a lista de chats recentes
-    const recentChatList = document.querySelector('.recent-chats-list');
+// ============================================================================
+const CHAT_ITEM_SELECTOR = '.conversation-items-container';
+const BOTTOM_CONTROLS_SELECTOR = 'side-nav-action-button[data-test-id="settings-and-help-button"]'; // <<< A CHAVE!
+const MORE_OPTIONS_BUTTON_SELECTOR = 'button[data-test-id="actions-menu-button"]';
+const MENU_DELETE_BUTTON_SELECTOR = '.mat-mdc-menu-item';
+const CONFIRM_DELETE_BUTTON_SELECTOR = '.confirmation-dialog .confirm-button';
 
-    // Se a UI estiver pronta e nosso botão ainda não existir, nós o criamos.
-    if (sidebarControls && recentChatList && !document.getElementById('bulkDeleteBtn')) {
-        console.log('Gemini UI carregada, injetando funcionalidade de bulk delete.');
-        injectBulkDeleteUI(sidebarControls, recentChatList);
-        // Podemos parar de observar uma vez que a UI foi injetada.
-        // obs.disconnect(); // Descomente se quiser que rode apenas uma vez.
+// ============================================================================
+// Estado da Aplicação
+// ============================================================================
+let isSelectionModeActive = false;
+let bulkDeleteButton;
+
+/**
+ * Função principal que observa o DOM para injetar nossa UI.
+ */
+const observer = new MutationObserver((mutations, obs) => {
+    const bottomControls = document.querySelector(BOTTOM_CONTROLS_SELECTOR);
+
+    // Se o container de baixo existir e nosso botão ainda não, injetamos a UI.
+    if (bottomControls && !document.getElementById('geminiBulkDeleteBtn')) {
+        console.log('Gemini UI detectada. Injetando botão de exclusão em massa.');
+        injectInitialUI(bottomControls);
+        // Uma vez injetado, não precisamos mais observar.
+        obs.disconnect();
     }
 });
 
@@ -22,102 +32,118 @@ observer.observe(document.body, {
 });
 
 /**
- * Injeta os checkboxes e o botão principal na UI do Gemini.
- * @param {HTMLElement} controlsContainer - O container onde o botão de deletar será adicionado.
- * @param {HTMLElement} chatListContainer - O container da lista de chats.
+ * Injeta o botão inicial "Excluir Vários" na UI.
+ * @param {HTMLElement} targetElement - O elemento de 'Configurações' antes do qual vamos inserir nosso botão.
  */
-function injectBulkDeleteUI(controlsContainer, chatListContainer) {
-    // 1. Criar o botão de deletar
-    const bulkDeleteBtn = document.createElement('button');
-    bulkDeleteBtn.id = 'bulkDeleteBtn';
-    bulkDeleteBtn.textContent = 'Deletar Selecionados';
-    bulkDeleteBtn.onclick = handleBulkDelete;
-    controlsContainer.appendChild(bulkDeleteBtn);
+function injectInitialUI(targetElement) {
+    bulkDeleteButton = document.createElement('button');
+    bulkDeleteButton.id = 'geminiBulkDeleteBtn';
+    bulkDeleteButton.textContent = 'Excluir Vários';
+    bulkDeleteButton.onclick = toggleSelectionMode;
 
-    // 2. Adicionar checkboxes aos itens de chat existentes e futuros
-    const addCheckboxes = (targetNode) => {
-        const chatItems = targetNode.querySelectorAll('.chat-history-item:not(.has-checkbox)');
-        chatItems.forEach(item => {
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'bulk-delete-checkbox';
-            item.classList.add('has-checkbox'); // Evita adicionar múltiplos checkboxes
-            // Adiciona o checkbox no início do item do chat
-            item.prepend(checkbox);
-        });
-    };
-    
-    // Adiciona aos chats já existentes
-    addCheckboxes(chatListContainer);
-
-    // Observa a lista de chats para adicionar checkboxes a novos itens (quando o histórico carrega mais)
-    const chatObserver = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            if (mutation.addedNodes.length) {
-                addCheckboxes(mutation.target);
-            }
-        });
-    });
-
-    chatObserver.observe(chatListContainer, {
-        childList: true,
-        subtree: true
-    });
+    // Adiciona nosso botão ANTES do elemento de configurações.
+    targetElement.before(bulkDeleteButton);
 }
 
 /**
- * Lida com o evento de clique do botão "Deletar Selecionados".
+ * Ativa ou desativa o modo de seleção, mostrando/escondendo os checkboxes.
+ */
+function toggleSelectionMode() {
+    isSelectionModeActive = !isSelectionModeActive;
+    const chatItems = document.querySelectorAll(CHAT_ITEM_SELECTOR);
+
+    if (isSelectionModeActive) {
+        bulkDeleteButton.textContent = 'Cancelar';
+        bulkDeleteButton.classList.add('cancel-mode'); // Adiciona classe para estilo de "cancelar"
+
+        chatItems.forEach(item => {
+            if (item.querySelector('.bulk-delete-checkbox')) return; // Já tem, não faz nada.
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'bulk-delete-checkbox';
+            checkbox.onclick = updateDeleteButtonState;
+            item.prepend(checkbox);
+            item.classList.add('selection-active'); // Para estilização do item
+        });
+    } else {
+        // Sai do modo de seleção
+        document.querySelectorAll('.bulk-delete-checkbox').forEach(cb => cb.remove());
+        document.querySelectorAll('.selection-active').forEach(item => item.classList.remove('selection-active'));
+        
+        // Reseta o botão principal
+        bulkDeleteButton.textContent = 'Excluir Vários';
+        bulkDeleteButton.onclick = toggleSelectionMode; // Garante que a função seja a de alternar
+        bulkDeleteButton.classList.remove('active-delete', 'cancel-mode');
+    }
+}
+
+/**
+ * Atualiza a aparência e função do botão principal com base nos checkboxes marcados.
+ */
+function updateDeleteButtonState() {
+    const checkedCount = document.querySelectorAll('.bulk-delete-checkbox:checked').length;
+
+    if (checkedCount > 0) {
+        bulkDeleteButton.textContent = `Excluir (${checkedCount})`;
+        bulkDeleteButton.classList.add('active-delete'); // Deixa o botão vermelho vivo
+        bulkDeleteButton.classList.remove('cancel-mode');
+        bulkDeleteButton.onclick = handleBulkDelete; // Muda a função do botão para DELETAR
+    } else {
+        // Nenhum selecionado, o botão age como "Cancelar"
+        bulkDeleteButton.textContent = 'Cancelar';
+        bulkDeleteButton.classList.remove('active-delete');
+        bulkDeleteButton.classList.add('cancel-mode');
+        bulkDeleteButton.onclick = toggleSelectionMode; // Volta a função para CANCELAR
+    }
+}
+
+/**
+ * Executa a lógica de exclusão para os itens selecionados.
  */
 async function handleBulkDelete() {
     const checkedItems = document.querySelectorAll('.bulk-delete-checkbox:checked');
-    if (checkedItems.length === 0) {
-        alert('Nenhum chat selecionado para deletar.');
+    if (checkedItems.length === 0) return;
+
+    if (!confirm(`Tem certeza que quer deletar ${checkedItems.length} chat(s)?`)) {
         return;
-    }
-
-    if (!confirm(`Você tem certeza que quer deletar ${checkedItems.length} chat(s)?`)) {
-        return;
-    }
-
-    this.disabled = true; // Desabilita o botão para evitar cliques duplos
-    this.textContent = 'Deletando...';
-
-    for (const checkbox of checkedItems) {
-        const chatItem = checkbox.closest('.chat-history-item');
-        try {
-            // Simula o processo de deleção manual
-            // 1. Encontra e clica no botão "..." (mais opções)
-            const moreOptionsBtn = chatItem.querySelector('button[aria-label="More"]'); // O seletor pode mudar!
-            if (moreOptionsBtn) moreOptionsBtn.click();
-            await sleep(100); // Pequena pausa para o menu aparecer
-
-            // 2. Encontra e clica no botão "Delete" no menu que apareceu
-            // O menu de contexto é geralmente adicionado ao body, não dentro do item.
-            const deleteOption = Array.from(document.querySelectorAll('.mat-mdc-menu-item'))
-                                     .find(el => el.textContent.trim() === 'Delete');
-            if (deleteOption) deleteOption.click();
-            await sleep(100); // Pausa para o diálogo de confirmação
-
-            // 3. Encontra e clica no botão de confirmação da deleção
-            const confirmButton = document.querySelector('.confirmation-dialog button.confirm-button'); // Seletor de exemplo
-            if(confirmButton) confirmButton.click();
-
-            console.log('Chat deletado:', chatItem.textContent);
-            await sleep(500); // Pausa maior entre deleções para a UI do Gemini processar
-        } catch (error) {
-            console.error('Falha ao deletar o chat:', chatItem.textContent, error);
-        }
     }
     
-    this.disabled = false;
-    this.textContent = 'Deletar Selecionados';
-    alert('Deleção em massa concluída!');
+    bulkDeleteButton.disabled = true;
+    bulkDeleteButton.textContent = 'Excluindo...';
+
+    for (const checkbox of checkedItems) {
+        const chatItem = checkbox.closest(CHAT_ITEM_SELECTOR);
+        try {
+            // A lógica de simular cliques permanece a mesma
+            const moreOptionsBtn = chatItem.querySelector(MORE_OPTIONS_BUTTON_SELECTOR);
+            if (moreOptionsBtn) moreOptionsBtn.click();
+            await sleep(150);
+
+            const deleteOption = Array.from(document.querySelectorAll(MENU_DELETE_BUTTON_SELECTOR))
+                                     .find(el => el.textContent.trim().toLowerCase() === 'excluir');
+            if (deleteOption) deleteOption.click();
+            await sleep(150);
+
+            const confirmButton = document.querySelector(CONFIRM_DELETE_BUTTON_SELECTOR);
+            if (confirmButton) confirmButton.click();
+            
+            console.log('Chat deletado:', chatItem.textContent.trim());
+            await sleep(500); // Pausa para a UI do Gemini respirar
+        } catch (error) {
+            console.error('Falha ao deletar chat:', error);
+        }
+    }
+
+    bulkDeleteButton.disabled = false;
+    // Após deletar tudo, sai do modo de seleção.
+    toggleSelectionMode();
 }
+
 
 /**
  * Função utilitária para criar pausas.
  * @param {number} ms - Tempo em milissegundos.
- * @returns {Promise}
  */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
