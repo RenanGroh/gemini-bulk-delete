@@ -3,14 +3,16 @@
   "name": "Gemini Bulk Chat Delete",
   "version": "0.1.0",
   "description": "Adiciona a funcionalidade de selecionar e deletar múltiplos chats no Gemini.",
-  "permissions": [
-    "storage" 
-  ],
+  "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://gemini.google.com/*"],
       "js": ["content.js"],
       "css": ["styles.css"]
     }
-  ]
+  ],
+  "icons": {
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
 }
