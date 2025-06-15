@@ -1,62 +1,192 @@
-/* Estilo principal para o nosso botão */
-#geminiBulkDeleteBtn {
-    width: 100%;
-    margin-bottom: 8px; /* Espaço entre ele e o botão de configs */
-    padding: 10px;
-    border: 1px solid #5f6368; /* Cinza escuro, mais sutil */
-    background-color: transparent;
-    color: #e8eaed; /* Cor do texto padrão do Gemini */
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 14px;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-    order: -1; /* Força o botão a ir para o topo do container flex */
+/* styles.css (v3.0 - Polished)
+  Estilos refinados para uma aparência nativa do Gemini.
+*/
+
+/* Estilo do ícone dentro do nosso botão */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+  font-size: 18px;
+
+  position: relative;
+  left: -3px;
 }
 
+/* Botão principal, estilizado para parecer um botão nativo do Gemini */
+#geminiBulkDeleteBtn {
+  position: relative; /* Essencial para o touch target funcionar */
+  overflow: hidden; /* Garante que o efeito de hover fique contido */
+  /* Layout e dimensões */
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 8px;
+  width: auto; /* Deixa o botão ter o tamanho do seu conteúdo + padding */
+  height: 40px;
+  padding: 0 16px;
+  /* A mágica do espaçamento: 0 topo, 12px laterais, 8px embaixo */
+  margin: 0 12px 8px 12px; /* MUDANÇA AQUI */
+
+  /* Aparência */
+  background-color: transparent;
+  border: none;
+  border-radius: 20px; /* Bordas totalmente arredondadas */
+  color: #a2a9b0; /* Cor do texto padrão */
+
+  /* Tipografia */
+  /* Usando a fonte exata que você pediu! */
+  font-family: "Google Sans Flex", "Google Sans", sans-serif; /* MUDANÇA AQUI */
+  font-size: var(--gem-sys-typography-type-scale--body-m-font-size);
+  font-weight: var(--gem-sys-typography-type-scale--body-m-font-weight);
+
+  /* Comportamento */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  order: -1; /* Força o botão a ir para o topo do seu container */
+}
+
+/* Efeito de hover sutil, como no Gemini */
 #geminiBulkDeleteBtn:hover {
-    background-color: #3c4043; /* Cor de hover do Gemini */
+  background-color: rgba(232, 234, 237, 0.08); /* Cinza bem sutil */
 }
 
 /* Estilo para quando o botão está no modo de "Cancelar" */
 #geminiBulkDeleteBtn.cancel-mode {
-    border-color: #8ab4f8; /* Azul do Google */
-    color: #8ab4f8;
-}
-#geminiBulkDeleteBtn.cancel-mode:hover {
-    background-color: rgba(138, 180, 248, 0.1);
+  color: #8ab4f8; /* Azul do Google para indicar uma ação primária/alternativa */
 }
 
 /* Estilo para quando o botão está pronto para DELETAR (ativo) */
 #geminiBulkDeleteBtn.active-delete {
-    border-color: #f28b82; /* Vermelho do Google */
-    background-color: #f28b82;
-    color: #202124; /* Texto escuro para contraste */
-    font-weight: bold;
+  background-color: #f28b82; /* Vermelho do Google */
+  color: #202124; /* Texto escuro para contraste */
+  font-weight: bold;
 }
 #geminiBulkDeleteBtn.active-delete:hover {
-    border-color: #f6a7a1;
-    background-color: #f6a7a1;
+  background-color: #f6a7a1; /* Vermelho mais claro no hover */
 }
 
+/* Botão desabilitado */
 #geminiBulkDeleteBtn:disabled {
-    background-color: #5f6368;
-    border-color: #5f6368;
-    color: #9aa0a6;
-    cursor: not-allowed;
+  background-color: #3c4043;
+  color: #5f6368;
+  cursor: not-allowed;
 }
 
-/* Alinha o item de chat quando o checkbox está visível */
-.chat-history-item.selection-active {
-    display: flex !important;
-    align-items: center;
-    gap: 12px;
-    padding-left: 8px; /* Adiciona um recuo para alinhar */
+/* CORREÇÃO DO ALINHAMENTO DO CHECKBOX
+  Aplica display:flex ao container do item de chat quando em modo de seleção.
+*/
+.conversation-items-container.selection-active {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  border-radius: 8px; /* Adiciona um destaque sutil no item */
 }
 
+/* CHECKBOX REDONDO */
 .bulk-delete-checkbox {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: #8ab4f8; /* Cor do checkbox quando marcado */
+  /* Reseta a aparência padrão */
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+
+  /* Nossas dimensões e forma */
+  width: 18px;
+  height: 18px;
+  border: 2px solid #bdc1c6; /* Cinza claro */
+  border-radius: 50%; /* A bolinha! */
+  cursor: pointer;
+
+  /* Posição e transição */
+  display: grid;
+  place-content: center;
+  transition: background-color 0.1s, border-color 0.1s;
+  flex-shrink: 0; /* Impede que ele seja esmagado */
+}
+
+.bulk-delete-checkbox::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.1s;
+  box-shadow: inset 1em 1em #8ab4f8; /* Cor do check */
+}
+
+/* Quando o checkbox está marcado */
+.bulk-delete-checkbox:checked {
+  border-color: #8ab4f8; /* Borda azul */
+  background-color: #8ab4f81a; /* Fundo azul transparente */
+}
+
+.bulk-delete-checkbox:checked::before {
+  transform: scale(1); /* Mostra a bolinha de dentro */
+}
+
+.conversation-items-container.selection-active .conversation {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+#geminiBulkDeleteBtn .material-symbols-outlined {
+  /* O !important é um decreto final. Ele ignora as outras regras. */
+  font-family: "Material Symbols Outlined" !important;
+}
+
+/* ======================================================
+   Estilos para o Modo "Icon-Only" (Barra Encolhida)
+   Tentativa de Alinhamento Simples
+   ====================================================== */
+
+/* Quando nosso botão ganha a classe .icon-only */
+#geminiBulkDeleteBtn.icon-only {
+  box-sizing: border-box; /* Garante que padding e borda não aumentem o tamanho */
+
+  /* AS MEDIDAS EXATAS DO BOTÃO NATIVO */
+  width: 48px;
+  height: 48px;
+
+  /* Espaçamento vertical para alinhar com o de baixo */
+  margin-bottom: 8px;
+
+  /* Remove margens laterais ou padding que possam interferir no alinhamento */
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  padding: 0;
+
+  border-radius: 50%; /* Deixa redondo */
+}
+
+/* Esconde o texto do botão quando em modo ícone */
+#geminiBulkDeleteBtn.icon-only #bulkDeleteBtnText {
+  display: none;
+}
+
+#geminiBulkDeleteBtn .mat-mdc-button-touch-target {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* AS MEDIDAS EXATAS DO TOUCH TARGET NATIVO */
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+  pointer-events: none; /* Garante que ele não interfira no clique do ícone */
+}
+
+.deletion-failed {
+  background-color: rgba(
+    242,
+    139,
+    130,
+    0.15
+  ) !important; /* Fundo avermelhado sutil */
+  border: 1px solid #f28b82;
 }
