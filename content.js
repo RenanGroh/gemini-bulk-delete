@@ -177,7 +177,6 @@ async function handleBulkDelete() {
   );
   if (checkedItems.length === 0) return;
 
-  // A confirmação inicial continua sendo uma boa ideia para evitar acidentes.
   if (
     !confirm(`Are you sure you want to delete ${checkedItems.length} chat(s)?`)
   ) {
@@ -185,57 +184,50 @@ async function handleBulkDelete() {
   }
 
   bulkDeleteButton.disabled = true;
-  document.getElementById("bulkDeleteBtnText").textContent = "Deleting...";
+  const buttonText = document.getElementById("bulkDeleteBtnText");
+  const total = checkedItems.length;
 
-  for (const checkbox of checkedItems) {
+  // Usamos um loop 'for' tradicional com índice para podermos mostrar o progresso
+  for (let i = 0; i < total; i++) {
+    const checkbox = checkedItems[i];
     const chatItem = checkbox.closest(CHAT_ITEM_SELECTOR);
+
+    // ATUALIZA O CONTADOR ANTES de tentar deletar
+    buttonText.textContent = `Deleting ${i + 1} of ${total}...`;
+
     try {
       const moreOptionsBtn = chatItem.querySelector(
         MORE_OPTIONS_BUTTON_SELECTOR
       );
       if (moreOptionsBtn) moreOptionsBtn.click();
 
-      // Espera INTELIGENTE pelo botão de deletar do menu aparecer
       const deleteOption = await waitForElement(
         'button[data-test-id="delete-button"]'
       );
       if (deleteOption) deleteOption.click();
       else throw new Error("Botão 'Delete' do menu não encontrado.");
 
-      // Espera INTELIGENTE pelo botão de confirmação final aparecer
       const confirmButton = await waitForElement(
         'button[data-test-id="confirm-button"]'
       );
       if (confirmButton) confirmButton.click();
       else throw new Error("Botão de confirmação final não encontrado.");
 
-      // Pequena pausa final para a UI respirar antes do próximo loop
-      await sleep(250);
+      await sleep(250); // Pausa para a UI respirar
     } catch (error) {
       console.error(
         "Falha ao deletar chat:",
         chatItem.textContent.trim(),
         error
       );
-      chatItem.classList.add("deletion-failed"); // <<< ADICIONE ISSO
+      chatItem.classList.add("deletion-failed");
     }
   }
 
+  // --- LIMPEZA FINAL ---
+  // Acontece uma única vez, APÓS o loop terminar completamente.
   bulkDeleteButton.disabled = false;
   toggleSelectionMode();
-
-  const total = checkedItems.length;
-  document.getElementById(
-    "bulkDeleteBtnText"
-  ).textContent = `Deleting 1 of ${total}...`;
-
-  for (let i = 0; i < checkedItems.length; i++) {
-    const checkbox = checkedItems[i];
-    // ... (lógica do try/catch) ...
-    document.getElementById("bulkDeleteBtnText").textContent = `Deleting ${
-      i + 2
-    } of ${total}...`;
-  }
 }
 
 /**
